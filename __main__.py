@@ -2,7 +2,7 @@ import tkinter as tk
 import os
 
 def run1():
-    script_path = r"C:\path\to\yourscript.py"
+    script_path = r"restartgpu.py"
     os.system(f'start cmd /k python "{script_path}"')
 
 root = tk.Tk()
