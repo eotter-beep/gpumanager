@@ -3,7 +3,7 @@ import keyboard
 import time
 print("GPUManager")
 print("----------------------------------------------------------------------")
-print("Restart the terminal to avoid terminal messups when restarting the GPU")
+print("Restart the terminal to avoid terminal messups when restarting the GPU (takes 10 seconds)")
 time.sleep(10)
 os.system('cls')
 time.sleep(10)
