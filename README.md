@@ -1,8 +1,8 @@
 # Installing
 
-Open Command Prompt and then type in python install.py
+Open Command Prompt and then type in python installer.py
 
-Click Start Install
+Click Start The installer
 
 ## Launching
 
