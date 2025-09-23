@@ -1,8 +1,9 @@
-import PySimpleGUI as sg
+import customtkinter as ctk
 import os
 import GPUtil
 import platform
 
+# Function to run the restart GPU script
 def run1():
     script_path = r"restartgpu.py"
     os.system(f'start cmd /k python "{script_path}"')
@@ -22,21 +23,21 @@ GPU: {gpu_name}
 PID: {os.getpid()}
 """
 
-# Define the layout
-layout = [
-    [sg.Text(info, font=("Helvetica", 14), size=(60, None))],
-    [sg.Button("Restart GPU", size=(20, 2))]
-]
+# Set theme
+ctk.set_appearance_mode("dark")  # Modes: "dark", "light", "system"
+ctk.set_default_color_theme("blue")  # Themes: "blue", "green", "dark-blue"
 
-# Create the window
-window = sg.Window("DeviceManager", layout)
+# Create window
+root = ctk.CTk()
+root.title("DeviceManager")
+root.geometry("600x400")
 
-# Event loop
-while True:
-    event, values = window.read()
-    if event == sg.WINDOW_CLOSED:
-        break
-    elif event == "Restart GPU":
-        run1()
+# Label for info
+label = ctk.CTkLabel(root, text=info, justify="left", font=("Helvetica", 14))
+label.pack(pady=20, padx=20)
 
-window.close()
+# Button to restart GPU
+button = ctk.CTkButton(root, text="Restart GPU", command=run1, height=40, width=200)
+button.pack(pady=20)
+
+root.mainloop()
