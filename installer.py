@@ -3,6 +3,7 @@ import os
 
 def startinstall():
     os.system('start cmd /k "pip install GPUtil"')
+    os.system('start cmd /k "pip install customtkinter"')
     os.system('start cmd /k "echo Skipping the other libraries because they are included in the official Python base"')
 
 root = tk.Tk()
