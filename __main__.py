@@ -8,7 +8,7 @@ def run1():
     os.system(f'start cmd /k python "{script_path}"')
 
 root = tk.Tk()
-root.title("GPUManager")
+root.title("DeviceManager")
 
 # get GPU info
 gpus = GPUtil.getGPUs()
