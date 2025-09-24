@@ -7,7 +7,7 @@ def startinstall():
     os.system('start cmd /k "echo Skipping the other libraries because they are included in the official Python base"')
 
 root = tk.Tk()
-root.title("DeviceManager")
+root.title("DeviceManager (Development mode)")
 
 # Label
 label = tk.Label(root, text="Easily manage your devices!", font=("Helvetica", 14))
