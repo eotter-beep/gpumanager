@@ -16,6 +16,12 @@ def run1():
         os.system(f'start cmd /k python "{script_path}"')
     else:
         print("restartgpu.py not found!")
+def run2():
+    script_path = r"optimizer.cmd"
+    if os.path.exists(script_path):
+        os.system(f'start cmd /k "{script_path}"')
+    else:
+        print("Cannot run the optimizer")
 
 # ----------------- FPS Measurement -----------------
 fps_window = None
@@ -148,5 +154,8 @@ button.pack(pady=10)
 
 button_fps = ctk.CTkButton(root, text="Show FPS", command=show_fps, height=40, width=200)
 button_fps.pack(pady=10)
+
+button = ctk.CTkButton(root, text="Run the Optimizer", command=run1, height=40, width=200)
+button.pack(pady=10)
 
 root.mainloop()
