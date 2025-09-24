@@ -5,89 +5,119 @@ import platform
 import time
 import threading
 from tkinter import Toplevel, Label
+import psutil
+from PIL import ImageGrab, Image
+import numpy as np
 
-# Function to run the restart GPU script
+# ----------------- GPU Restart -----------------
 def run1():
     script_path = r"restartgpu.py"
-    os.system(f'start cmd /k python "{script_path}"')
+    if os.path.exists(script_path):
+        os.system(f'start cmd /k python "{script_path}"')
+    else:
+        print("restartgpu.py not found!")
 
-# Global variable to track FPS window state
+# ----------------- FPS Measurement -----------------
 fps_window = None
 fps_running = False
 
+def get_screen_fps(exclude_window=None, interval=0.2):
+    """Estimates FPS by comparing consecutive screen captures while ignoring DeviceManager window."""
+    last_frame = None
+    frame_changes = 0
+    start_time = time.time()
+
+    while time.time() - start_time < 1.0:  # measure for 1 second
+        screen = ImageGrab.grab()
+        if exclude_window:
+            x, y, w, h = exclude_window
+            black_box = Image.new("RGB", (w, h), (0, 0, 0))
+            screen.paste(black_box, (x, y))
+
+        frame = np.array(screen.convert("L"))  # grayscale
+
+        if last_frame is not None:
+            diff = np.abs(frame.astype(np.int16) - last_frame.astype(np.int16))
+            if diff.mean() > 5:  # threshold for frame change
+                frame_changes += 1
+
+        last_frame = frame
+        time.sleep(interval)
+
+    fps = frame_changes / (time.time() - start_time)
+    return fps
+
 def show_fps():
     global fps_window, fps_running
-    
     if fps_running:
-        # If FPS is already running, stop it
         fps_running = False
         if fps_window and fps_window.winfo_exists():
             fps_window.destroy()
+        button_fps.configure(text="Show FPS")
         return
-    
-    # Create transparent overlay window
+
     fps_window = Toplevel(root)
     fps_window.title("FPS Monitor")
-    fps_window.geometry("150x60+100+100")  # Position at top-left corner
-    fps_window.overrideredirect(True)  # Remove window decorations
-    fps_window.attributes('-topmost', True)  # Always on top
-    fps_window.attributes('-alpha', 0.8)  # Semi-transparent
-    fps_window.configure(bg='black')
-    
-    # FPS label
-    fps_label = Label(fps_window, text="FPS: --", font=("Arial", 16, "bold"), 
-                     fg="white", bg="black")
-    fps_label.pack(expand=True, fill='both')
-    
+    fps_window.geometry("220x100+100+100")
+    fps_window.overrideredirect(True)
+    fps_window.attributes('-topmost', True)
+    fps_window.attributes('-alpha', 0.85)
+    fps_window.configure(bg='#1a1a1a')
+
+    fps_label = Label(fps_window, text="FPS being used: Measuring...", font=("Arial", 14, "bold"), fg="#00ff00", bg='#1a1a1a')
+    fps_label.pack(expand=True, fill='both', padx=10, pady=5)
+
+    info_label = Label(fps_window, text="", font=("Arial", 10), fg="#cccccc", bg='#1a1a1a')
+    info_label.pack(expand=True, fill='both', padx=10, pady=5)
+
     fps_running = True
     button_fps.configure(text="Hide FPS")
-    
-    # Function to update FPS in a separate thread
+
     def update_fps():
-        frame_count = 0
-        last_time = time.time()
-        
         while fps_running and fps_window.winfo_exists():
-            # Simulate FPS calculation (you can replace this with actual FPS measurement)
-            current_time = time.time()
-            frame_count += 1
-            
-            if current_time - last_time >= 1.0:  # Update every second
-                fps = frame_count / (current_time - last_time)
-                fps_label.config(text=f"FPS: {fps:.1f}")
-                frame_count = 0
-                last_time = current_time
-            
-            time.sleep(0.01)  # Small delay to prevent high CPU usage
-    
-    # Start FPS update in a separate thread
-    fps_thread = threading.Thread(target=update_fps, daemon=True)
-    fps_thread.start()
-    
-    # Make the window draggable
+            # Get DeviceManager window area to ignore
+            x, y = root.winfo_x(), root.winfo_y()
+            w, h = root.winfo_width(), root.winfo_height()
+            exclude_area = (x, y, w, h)
+
+            fps = get_screen_fps(exclude_window=exclude_area, interval=0.1)
+
+            try:
+                cpu_percent = psutil.cpu_percent()
+                ram_percent = psutil.virtual_memory().percent
+                info_text = f"CPU: {cpu_percent:.0f}% | RAM: {ram_percent:.0f}%"
+            except:
+                info_text = "System stats unavailable"
+
+            # Update labels safely in main thread
+            fps_window.after(0, lambda f=fps, i=info_text: (fps_label.config(text=f"FPS: {f:.1f}"), info_label.config(text=i)))
+
+    threading.Thread(target=update_fps, daemon=True).start()
+
+    # Make overlay draggable
     def start_drag(event):
         fps_window.x = event.x
         fps_window.y = event.y
-    
     def do_drag(event):
-        deltax = event.x - fps_window.x
-        deltay = event.y - fps_window.y
-        x = fps_window.winfo_x() + deltax
-        y = fps_window.winfo_y() + deltay
+        x = fps_window.winfo_x() + event.x - fps_window.x
+        y = fps_window.winfo_y() + event.y - fps_window.y
         fps_window.geometry(f"+{x}+{y}")
-    
+
     fps_label.bind("<Button-1>", start_drag)
     fps_label.bind("<B1-Motion>", do_drag)
-    
-    # Close handling
-    def on_close():
-        global fps_running
-        fps_running = False
-        button_fps.configure(text="Show FPS")
-    
-    fps_window.protocol("WM_DELETE_WINDOW", on_close)
+    info_label.bind("<Button-1>", start_drag)
+    info_label.bind("<B1-Motion>", do_drag)
 
-# Get GPU info
+    fps_window.protocol("WM_DELETE_WINDOW", lambda: close_fps())
+
+def close_fps():
+    global fps_running
+    fps_running = False
+    if fps_window and fps_window.winfo_exists():
+        fps_window.destroy()
+    button_fps.configure(text="Show FPS")
+
+# ----------------- System Info -----------------
 gpus = GPUtil.getGPUs()
 gpu_name = gpus[0].name if gpus else "No GPU detected"
 
@@ -102,24 +132,20 @@ GPU: {gpu_name}
 PID: {os.getpid()}
 """
 
-# Set theme
-ctk.set_appearance_mode("dark")  # Modes: "dark", "light", "system"
-ctk.set_default_color_theme("blue")  # Themes: "blue", "green", "dark-blue"
+# ----------------- UI Setup -----------------
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
 
-# Create window
 root = ctk.CTk()
 root.title("DeviceManager")
 root.geometry("600x400")
 
-# Label for info
 label = ctk.CTkLabel(root, text=info, justify="left", font=("Helvetica", 14))
 label.pack(pady=20, padx=20)
 
-# Button to restart GPU
 button = ctk.CTkButton(root, text="Restart GPU", command=run1, height=40, width=200)
 button.pack(pady=10)
 
-# Button to show FPS
 button_fps = ctk.CTkButton(root, text="Show FPS", command=show_fps, height=40, width=200)
 button_fps.pack(pady=10)
 
