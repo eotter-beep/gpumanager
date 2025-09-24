@@ -32,4 +32,4 @@ def resgpu():
 # Show progress bar for 5 seconds before restarting GPU
 print_progress_bar(5)
 resgpu()
-print("GPU restart signal sent!")
+print("GPU restart signal sent! (will take a few seconds to flick on and off the black screen, that means it restarted)")
