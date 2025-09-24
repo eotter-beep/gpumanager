@@ -155,7 +155,7 @@ button.pack(pady=10)
 button_fps = ctk.CTkButton(root, text="Show FPS", command=show_fps, height=40, width=200)
 button_fps.pack(pady=10)
 
-button = ctk.CTkButton(root, text="Run the Optimizer", command=run1, height=40, width=200)
+button = ctk.CTkButton(root, text="Run the Optimizer", command=run2, height=40, width=200)
 button.pack(pady=10)
 
 root.mainloop()
