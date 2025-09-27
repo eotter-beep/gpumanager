@@ -1,9 +1,20 @@
 # Installing
 
-Open Command Prompt and then type in python installer.py
+### Windows
 
-Click Start The installer
+Open Command Prompt and then type in `python installer.py`.
+Click **Start the installer** to install the required packages (`customtkinter`, `GPUtil`, `numpy`, `Pillow`, and `psutil`).
+
+### Linux
+
+Open a terminal and run `python installer.py`. The installer will run `pip install` for the required packages and stream the results in the application window.
 
 ## Launching
 
-In Command Prompt type python .
+### Windows
+
+In Command Prompt type `python .`.
+
+### Linux
+
+In a terminal type `python .`. The application will fall back to running helper scripts in the background when a terminal emulator is not available.

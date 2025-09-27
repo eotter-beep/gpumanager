@@ -1,10 +1,41 @@
-import tkinter as tk
 import os
+import platform
+import subprocess
+import sys
+import tkinter as tk
+
+def _append_status(line):
+    """Helper to append a line to the status textbox."""
+    status.configure(state="normal")
+    status.insert(tk.END, line + "\n")
+    status.see(tk.END)
+    status.configure(state="disabled")
+    root.update_idletasks()
+
 
 def startinstall():
-    os.system('start cmd /k "pip install GPUtil"')
-    os.system('start cmd /k "pip install customtkinter"')
-    os.system('start cmd /k "echo Skipping the other libraries because they are included in the official Python base"')
+    packages = [
+        "customtkinter",
+        "GPUtil",
+        "numpy",
+        "Pillow",
+        "psutil",
+    ]
+
+    status.configure(state="normal")
+    status.delete("1.0", tk.END)
+    status.configure(state="disabled")
+
+    for package in packages:
+        _append_status(f"Installing {package}...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+            _append_status(f"✔ Installed {package}")
+        except subprocess.CalledProcessError as exc:
+            _append_status(f"✖ Failed to install {package}: {exc}")
+
+    if platform.system() == "Windows":
+        os.system("echo Installation complete")
 
 root = tk.Tk()
 root.title("DeviceManager")
@@ -15,6 +46,9 @@ label.pack(pady=20)
 
 # Button
 button = tk.Button(root, text="Start the installer", command=startinstall)
-button.pack(pady=20)
+button.pack(pady=10)
+
+status = tk.Text(root, width=50, height=6, state="disabled")
+status.pack(padx=20, pady=10)
 
 root.mainloop()
