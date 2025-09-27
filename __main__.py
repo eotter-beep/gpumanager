@@ -1,27 +1,84 @@
 import customtkinter as ctk
 import os
-import GPUtil
 import platform
+import subprocess
+import sys
 import time
 import threading
+from pathlib import Path
 from tkinter import Toplevel, Label
+
+import GPUtil
 import psutil
 from PIL import ImageGrab, Image
 import numpy as np
 
 # ----------------- GPU Restart -----------------
+def _run_in_terminal(command):
+    """Best-effort attempt to launch a command in a detached terminal."""
+    system = platform.system()
+    if system == "Windows":
+        os.system(f'start "" cmd /k {command}')
+        return True
+
+    # Try common Linux terminals
+    if system == "Linux":
+        terminals = [
+            os.environ.get("TERMINAL"),
+            "x-terminal-emulator",
+            "gnome-terminal",
+            "konsole",
+            "xfce4-terminal",
+            "lxterminal",
+            "xterm",
+        ]
+        for term in filter(None, terminals):
+            try:
+                subprocess.Popen([term, "-e", "bash", "-lc", command])
+                return True
+            except FileNotFoundError:
+                continue
+            except Exception as exc:
+                print(f"Failed to launch {term}: {exc}")
+        print("No compatible terminal emulator found; running in background instead.")
+    return False
+
+
 def run1():
-    script_path = r"restartgpu.py"
-    if os.path.exists(script_path):
-        os.system(f'start cmd /k python "{script_path}"')
-    else:
+    script_path = Path("restartgpu.py")
+    if not script_path.exists():
         print("restartgpu.py not found!")
+        return
+
+    command = f'"{sys.executable}" "{script_path}"'
+    if not _run_in_terminal(command):
+        try:
+            subprocess.Popen([sys.executable, str(script_path)])
+        except Exception as exc:
+            print(f"Failed to launch restartgpu.py: {exc}")
+
+
 def run2():
-    script_path = r"optimizer.cmd"
-    if os.path.exists(script_path):
-        os.system(f'start cmd /k "{script_path}"')
-    else:
-        print("Cannot run the optimizer")
+    script_path = Path("optimizer.cmd")
+    system = platform.system()
+
+    if system == "Windows" and script_path.exists():
+        _run_in_terminal(f'"{script_path}"')
+        return
+
+    if system != "Windows":
+        alt_script = script_path.with_suffix(".sh")
+        if alt_script.exists():
+            if not _run_in_terminal(f'"{alt_script}"'):
+                try:
+                    subprocess.Popen(["bash", str(alt_script)])
+                except Exception as exc:
+                    print(f"Failed to launch {alt_script}: {exc}")
+        else:
+            print("Optimizer script not available on this platform.")
+        return
+
+    print("Cannot run the optimizer")
 
 # ----------------- FPS Measurement -----------------
 fps_window = None
@@ -124,8 +181,11 @@ def close_fps():
     button_fps.configure(text="Show FPS")
 
 # ----------------- System Info -----------------
-gpus = GPUtil.getGPUs()
-gpu_name = gpus[0].name if gpus else "No GPU detected"
+try:
+    gpus = GPUtil.getGPUs()
+    gpu_name = gpus[0].name if gpus else "No GPU detected"
+except Exception:
+    gpu_name = "GPU info unavailable"
 
 info = f"""System: {platform.system()}
 User Name: {platform.node()}
