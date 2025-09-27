@@ -4,6 +4,40 @@ import subprocess
 import sys
 import tkinter as tk
 
+def _append_status(line):
+    """Helper to append a line to the status textbox."""
+    status.configure(state="normal")
+    status.insert(tk.END, line + "\n")
+    status.see(tk.END)
+    status.configure(state="disabled")
+    root.update_idletasks()
+
+
+def startinstall():
+    packages = [
+        "customtkinter",
+        "GPUtil",
+        "numpy",
+        "Pillow",
+        "psutil",
+    ]
+
+    status.configure(state="normal")
+    status.delete("1.0", tk.END)
+    status.configure(state="disabled")
+
+    for package in packages:
+        _append_status(f"Installing {package}...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+            _append_status(f"✔ Installed {package}")
+        except subprocess.CalledProcessError as exc:
+            _append_status(f"✖ Failed to install {package}: {exc}")
+
+    if platform.system() == "Windows":
+        os.system("echo Installation complete")
+
+
 def startinstall():
     packages = ["GPUtil", "customtkinter"]
     output_lines = []
