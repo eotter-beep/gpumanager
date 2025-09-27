@@ -3,11 +3,18 @@
 ### Windows
 
 Open Command Prompt and then type in `python installer.py`.
+
 Click **Start the installer** to install the required packages (`customtkinter`, `GPUtil`, `numpy`, `Pillow`, and `psutil`).
 
 ### Linux
 
 Open a terminal and run `python installer.py`. The installer will run `pip install` for the required packages and stream the results in the application window.
+
+Click **Start the installer** to install the required packages.
+
+### Linux
+
+Open a terminal and run `python installer.py`. The installer will run `pip install` for the required packages and show the results in the application window
 
 ## Launching
 
